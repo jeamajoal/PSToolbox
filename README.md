@@ -27,7 +27,7 @@ At this time, I have only added to the directory the tools that I have created. 
 Run the provided Python web server script, postserver.py, to serve the content of the loadables directory.
 
     python3 python/postserver.py -b 0.0.0.0 -p 8443 -u ~/uploads
-***NOTE:  The uploads dir is being set OUTSIDE of the loadables folder.  This will make your Get-TollboxItems (gti) run mor efficiently later if you so choose. Otherwise if you are ok waiting you can keep it in your loadables folder. 
+***NOTE:  The uploads dir is being set OUTSIDE of the loadables folder.  This will make your Get-TollboxItems (gti) run more efficiently later if you so choose to use it. Otherwise if you are ok waiting you can keep it in your loadables folder. 
 
 # Usage
 
