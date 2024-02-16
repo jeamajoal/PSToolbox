@@ -307,7 +307,7 @@ if (-not $Global:WebServerPort) {
 }
 if (-not $Global:WebServerProtocol)
 {
-    $isSecure = Read-Host "Will the web server be secure? (Y/N)"
+    $isSecure = Read-Host "Will the web server be secure? [N] (Y/N)"
     $isSecure = $(($isSecure.ToUpper()) -eq 'Y' -or $($isSecure.ToUpper()) -eq 'YES')
     if ($isSecure)
     {
@@ -319,7 +319,7 @@ if (-not $Global:WebServerProtocol)
     }
 }
 if (-not $Global:ToolboxLocation) {
-    $loc = Read-Host "Enter the directory to store Toolbox items in on victim machine."
+    $loc = Read-Host "Enter the directory to store Toolbox items in on victim machine. [C:\users\public] "
     if ($loc)
     {
         $Global:ToolboxLocation = $loc
