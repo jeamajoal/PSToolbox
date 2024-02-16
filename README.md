@@ -20,7 +20,6 @@ Begin by cloning the PSToolbox repository to your local machine:
 
 Add any required files to the 'loadables' directory
 Navigate to the cloned repository and ensure the loadables directory contains all necessary tools and scripts you intend to serve.
-At this time, I have only added to the directory the tools that I have created. For the other tools referenced in the gettoolbox.ps1 file you will need to add them yourself.
 
 # Start the Web Server
 
