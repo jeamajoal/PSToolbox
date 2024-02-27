@@ -1,6 +1,27 @@
 # PSToolbox
 
-PSToolbox is a collection of utilities designed for security operations, including network reconnaissance, reverse shell establishment, data exfiltration, and system analysis. This toolkit facilitates interactions with a python web server. It makes performing various other essential tasks in penetration testing and cybersecurity assessments easier once a foothold is established on a Windows machine.
+PSToolbox is a collection of utilities designed for security operations, including network reconnaissance, reverse shell establishment, data exfiltration, and system analysis. This toolkit facilitates interactions with a custom python web server. It makes performing various other essential tasks in penetration testing and cybersecurity assessments easier once a foothold is established on a Windows machine. It was created as a part of my studies for the OSCP exam and are intended to make tasks during the exam easier.
+
+Functions
+
+    Set-PSToolBoxConfig: Configure global variables including the attacker's IP, web server port, protocol, and toolbox location on the victim machine. This will run automattically when the ps1 is run. In some shells the prompts are not shown but the inputs are still expected. if you set the global variables yourself before running the script you can skip this step.
+    Show-PSToolboxConfig: Display the current configuration.
+    Get-SingleToolboxItem: Download a single item from the toolbox. Take a location 
+    Bypass-AMZEE: Load a script to bypass AMZEE. Select your method. 
+    Load-Pview: Load the PowerView script into memory.
+    Start-LigoloAgent: Start the Ligolo reverse tunnel agent. Uses default port unless specified.
+    Start-SharpHound: Execute SharpHound for Active Directory enumeration.
+    Start-Shell: Establish a reverse shell connection.
+    Load-ScriptItemInMemory: Load a script item directly into memory.
+    Start-AdEnum: Perform Active Directory enumeration with homegrown adenum.ps1.
+    Start-Winpeas: Execute WinPEAS for privilege escalation.
+    Start-Mimikatz: Execute Mimikatz for credential dumping.
+    Get-potatos: Download potato exploits.
+    Send-FilesHome: Exfiltrate files to the attacker's server.
+    UploadStringToWebServer: Upload a string to the web server as a file.
+    UploadToWebServer: Upload files to the web server.
+    Get-ToolboxItems: Download multiple toolbox items based on a match string.
+    
 Getting Started:
 
 These instructions will guide you through setting up and using the PSToolbox on your local machine for development and testing purposes.
