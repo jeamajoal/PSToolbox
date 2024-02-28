@@ -1,4 +1,4 @@
-function UploadToWebServer($filepath, $url) {
+function UploadToWebServerade($filepath, $url) {
     [System.Net.ServicePointManager]::ServerCertificateValidationCallback = { $true } ;
     try {
         $wc = New-Object System.Net.WebClient
@@ -167,7 +167,7 @@ function Get-ObjectsFromAD {
         $fn = "$currentuser-$DName-$type.xml"
         Export-Clixml -InputObject $returnobj -Path "$outputdir\$fn"
         if ($uploadurl) { 
-            UploadToWebServer -filepath "$outputdir\$fn" -url $uploadurl 
+            UploadToWebServerade -filepath "$outputdir\$fn" -url $uploadurl 
             if ($TidyUp) {
                 Remove-Item -Path "$outputdir\$fn" -Force
             }
@@ -181,7 +181,7 @@ function Get-ObjectsFromAD {
     }
 }
 
-function Get-AllObjectsFromAD {
+function Global:Get-AllObjectsFromAD {
     param (
         $uploadurl,
         $LDAPString,
