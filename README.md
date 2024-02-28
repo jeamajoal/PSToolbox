@@ -57,13 +57,13 @@ powershell
 
 	iwr http://<YourServerIP>:<Port>/GetToolbox.ps1 -UseBasic | iex
 
-You will be prompted for your ip and the web server port.
+You will be prompted for your ip, web server port, is web server secure (https), and Local toolbox directory (defaults to c:\users\public). If the prompts do not echo in your shell they are still waiting for input in this order.  If you would rather set the global variables before running the script this portion will be sckipped.
 
 	#Show the current config
 	Show-PSToolboxConfig
 
 	#Reset the config
-	Set-PSToolboxConfig
+	Set-PSToolboxConfig -Reset
 
 	#Download all linked files that match linpeas	
 	gti -m linpeas
