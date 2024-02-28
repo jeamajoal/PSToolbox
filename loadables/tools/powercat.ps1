@@ -1,4 +1,4 @@
-function powercat
+function Global:powercat
 {
   param(
     [alias("Client")][string]$c="",
