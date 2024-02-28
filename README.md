@@ -12,7 +12,7 @@ Functions
     Start-LigoloAgent: Start the Ligolo reverse tunnel agent. Uses default port unless specified.
     Start-SharpHound: Execute SharpHound for Active Directory enumeration.
     Start-Shell: Establish a reverse shell connection.
-    Load-ScriptItemInMemory: Load a script item directly into memory.
+    Load-ScriptItemInMemory: Load a script item directly into memory. For functions in script files to be available to your pwsh session they must be instantiated as Global. ex. function Global:Func{}
     Start-AdEnum: Perform Active Directory enumeration with homegrown adenum.ps1.
     Start-Winpeas: Execute WinPEAS for privilege escalation.
     Start-Mimikatz: Execute Mimikatz for credential dumping.
